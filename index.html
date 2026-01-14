@@ -31,6 +31,8 @@
         @keyframes moveUp { from { transform: translateY(110vh); } to { transform: translateY(-10vh); } }
         /* Ajuste Fino para Paisagem */
         @media (orientation: landscape) { .main-content { flex-direction: row; gap: 40px; justify-content: center; } }
+        /* Estilo para o Input de Mês (Branco invertido igual Video) */
+        input[type="month"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
     </style>
 </head>
 <body onmousedown="resetTimer()" ontouchstart="resetTimer()" onclick="resetTimer()">
@@ -83,7 +85,12 @@
     <div id="modal-calendario" class="modal-overlay">
         <div class="glass-ui p-6 rounded-[2.5rem] w-full max-w-sm text-center relative">
             <button onclick="fecharModais()" class="absolute top-4 right-6 text-gray-500 text-xl active:scale-90"><i class="fas fa-times"></i></button>
-            <h2 class="text-theme font-bold mb-4 uppercase">Histórico</h2>
+            <h2 class="text-theme font-bold mb-2 uppercase">Histórico</h2>
+            
+            <div class="mb-4 flex justify-center">
+                <input type="month" id="mes-selecionado" onchange="renderizarCalendario()" class="bg-slate-900 text-white border border-white/20 rounded-lg px-4 py-2 text-sm uppercase font-bold outline-none focus:border-theme">
+            </div>
+
             <div id="calendar-container" class="calendar-grid"></div>
             <div class="mt-6 pt-4 border-t border-white/5 text-theme font-bold text-lg" id="cal-fatura-mes">R$ 0,00</div>
         </div>
@@ -117,7 +124,6 @@
         const supabaseRM = supabase.createClient(ENDERECO, CHAVE);
         let currentUser = localStorage.getItem("rm_u"), count = 0, historico = [], config = { preco: 14.0, meta: 16, theme: '#10b981', brandName: 'RM SUPREME' }, isPrivacyOn = false, dataEditando = "";
         
-        // AUTO-LOGOUT 5 MIN (Reinicia a cada clique)
         let timer;
         function resetTimer() { clearTimeout(timer); if(currentUser) timer = setTimeout(logout, 5 * 60 * 1000); }
 
@@ -138,7 +144,6 @@
             } else msg.innerText = "LOGIN INVÁLIDO";
         }
 
-        // REALTIME (INSTANTÂNEO)
         function setupRealtime() {
             supabaseRM.channel('custom-all-channel')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'usuarios', filter: `username=eq.${currentUser}` }, (payload) => {
@@ -183,11 +188,29 @@
         function abrirConfig() { document.getElementById('modal-config').style.display = 'flex'; document.getElementById('cfg-preco').value = config.preco; document.getElementById('cfg-meta').value = config.meta; document.getElementById('cfg-cor').value = config.theme; document.getElementById('cfg-brand').value = config.brandName; }
         async function salvarConfig() { config.preco = parseFloat(document.getElementById('cfg-preco').value); config.meta = parseInt(document.getElementById('cfg-meta').value); config.brandName = document.getElementById('cfg-brand').value; await supabaseRM.from('usuarios').update({ config_json: config }).eq('username', currentUser); fecharModais(); }
         
+        // --- FUNÇÃO DE CALENDÁRIO COM SELETOR E CABEÇALHO D-S-T-Q ---
         function abrirCalendario() {
             document.getElementById('modal-calendario').style.display = 'flex';
-            const cont = document.getElementById('calendar-container'); cont.innerHTML = '';
+            const hoje = new Date();
+            const anoMes = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+            // Garante que o input tenha valor inicial
+            if(!document.getElementById('mes-selecionado').value) {
+                document.getElementById('mes-selecionado').value = anoMes;
+            }
+            renderizarCalendario();
+        }
+
+        function renderizarCalendario() {
+            const inputMes = document.getElementById('mes-selecionado').value;
+            if(!inputMes) return;
             
-            // INSERÇÃO DAS LETRAS STQ (Sem mexer na lógica)
+            // Separa Ano e Mês
+            const [ano, mes] = inputMes.split('-').map(Number);
+            const dataBase = new Date(ano, mes - 1, 1);
+
+            const cont = document.getElementById('calendar-container'); cont.innerHTML = '';
+
+            // [AQUI ESTÁ O CÓDIGO VALIDADO QUE VOCÊ PEDIU]
             const diasSemana = ['D','S','T','Q','Q','S','S'];
             diasSemana.forEach(d => {
                 const dayHeader = document.createElement('div');
@@ -196,20 +219,48 @@
                 cont.appendChild(dayHeader);
             });
 
-            const h = new Date(), d = new Date(h.getFullYear(), h.getMonth() + 1, 0).getDate();
-            let totalM = 0, map = {}; historico.forEach(x => map[x.data] = x);
-            for(let j=1; j<=d; j++) {
-                const dt = `${String(j).padStart(2,'0')}/${String(h.getMonth()+1).padStart(2,'0')}/${h.getFullYear()}`;
-                const it = map[dt], div = document.createElement('div');
+            // Lógica de alinhamento dos dias (Correção para alinhar com D S T Q)
+            const primeiroDiaSemana = dataBase.getDay();
+            const ultimoDiaMes = new Date(ano, mes, 0).getDate();
+            
+            for(let i=0; i<primeiroDiaSemana; i++) {
+                const vazio = document.createElement('div');
+                cont.appendChild(vazio);
+            }
+
+            let totalM = 0; 
+            let map = {}; 
+            historico.forEach(x => map[x.data] = x);
+
+            for(let j=1; j<=ultimoDiaMes; j++) {
+                const dt = `${String(j).padStart(2,'0')}/${String(mes).padStart(2,'0')}/${ano}`;
+                const it = map[dt];
+                const div = document.createElement('div');
+                
+                // [AQUI ESTÁ A LÓGICA DE CORES VALIDADA]
                 div.className = `calendar-day ${it ? (it.qtd >= it.meta ? 'day-green' : 'day-red') : ''}`;
                 div.innerHTML = `<span>${j}</span>${it ? `<span class="text-[8px] mt-1 font-bold">${it.qtd}</span>` : ''}`;
+                
                 div.onclick = (e) => { e.stopPropagation(); abrirAjusteManual(dt, it ? it.qtd : 0); };
-                cont.appendChild(div); if(it) totalM += it.valor;
+                
+                cont.appendChild(div); 
+                if(it) totalM += it.valor;
             }
             document.getElementById('cal-fatura-mes').innerText = totalM.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
         }
+
         function abrirAjusteManual(dStr = null, vP = null) { dataEditando = dStr || new Date().toLocaleDateString('pt-BR'); document.getElementById('ajuste-data-label').innerText = dataEditando; document.getElementById('input-ajuste-manual').value = vP !== null ? vP : count; document.getElementById('modal-ajuste-manual').style.display = 'flex'; }
-        async function confirmarAjusteManual() { const nV = parseInt(document.getElementById('input-ajuste-manual').value) || 0; if (dataEditando === new Date().toLocaleDateString('pt-BR')) count = nV; await salvarNoBanco(dataEditando, nV); fecharModais(); updateUI(); if (dataEditando !== new Date().toLocaleDateString('pt-BR')) abrirCalendario(); }
+        
+        async function confirmarAjusteManual() { 
+            const nV = parseInt(document.getElementById('input-ajuste-manual').value) || 0; 
+            if (dataEditando === new Date().toLocaleDateString('pt-BR')) count = nV; 
+            await salvarNoBanco(dataEditando, nV); 
+            fecharModais(); 
+            updateUI(); 
+            if (document.getElementById('modal-calendario').style.display !== 'none' || dataEditando !== new Date().toLocaleDateString('pt-BR')) {
+                abrirCalendario(); 
+            }
+        }
         function logout() { localStorage.clear(); location.reload(); }
         
         window.onload = () => {
@@ -217,7 +268,7 @@
                 document.getElementById('login-overlay').style.display = 'none'; 
                 document.getElementById('app-content').classList.remove('hidden'); 
                 initialLoad(); 
-                setInterval(initialLoad, 10000); // Backup de segurança a cada 10s
+                setInterval(initialLoad, 10000); 
                 resetTimer(); 
             }
             const container = document.getElementById('protons-container');

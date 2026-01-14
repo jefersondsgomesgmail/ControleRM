@@ -9,53 +9,57 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { background-color: #0f172a; font-family: 'Inter', sans-serif; color: white; -webkit-tap-highlight-color: transparent; overflow: hidden; }
+        body { background-color: #0f172a; font-family: 'Inter', sans-serif; color: white; overflow: hidden; }
         .card-quiz { background: #1e293b; border: 1px solid #334155; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .btn-alt { transition: all 0.2s; border: 2px solid #334155; background: #0f172a; }
+        .btn-alt { transition: all 0.2s; border: 2px solid #334155; background: #0f172a; cursor: pointer; }
         .correct { background: #059669 !important; border-color: #34d399 !important; }
         .wrong { background: #991b1b !important; border-color: #f87171 !important; }
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        img { max-width: 100%; height: auto; border-radius: 12px; margin-bottom: 15px; border: 1px solid #475569; }
-        /* Filtro Overlay */
         #filter-overlay { backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.8); }
     </style>
 </head>
 <body class="flex flex-col h-screen">
 
-    <div class="p-4 flex justify-between items-center bg-slate-900 border-b border-slate-800">
-        <div class="flex items-center gap-2">
-            <i class="fas fa-brain text-blue-500 text-xl"></i>
-            <h1 class="font-bold tracking-wider text-sm italic">ENEM MASTER <span class="text-yellow-500 text-[10px]">PRO</span></h1>
+    <div class="p-3 bg-slate-900 border-b border-slate-800 flex justify-around items-center gap-2">
+        <div class="text-center">
+            <p class="text-[10px] text-slate-500 uppercase font-bold">Acertos</p>
+            <p id="count-acertos" class="text-green-500 font-black text-lg">0</p>
         </div>
-        <button onclick="toggleFiltros()" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 active:scale-90 transition">
-            <i class="fas fa-sliders-h text-blue-400"></i>
+        <div class="h-8 w-[1px] bg-slate-700"></div>
+        <div class="text-center">
+            <p class="text-[10px] text-slate-500 uppercase font-bold">Erros</p>
+            <p id="count-erros" class="text-red-500 font-black text-lg">0</p>
+        </div>
+        <div class="h-8 w-[1px] bg-slate-700"></div>
+        <div class="text-center">
+            <p class="text-[10px] text-slate-500 uppercase font-bold">Aproveitamento</p>
+            <p id="percentual" class="text-blue-400 font-black text-lg">0%</p>
+        </div>
+        <button onclick="toggleFiltros()" class="ml-2 w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center border border-slate-700">
+            <i class="fas fa-cog text-blue-400"></i>
         </button>
-    </div>
-
-    <div id="filter-overlay" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6">
-        <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-6 border border-slate-700 shadow-2xl">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-filter text-blue-500"></i> O que estudar?</h2>
-            <div class="space-y-3 mb-6" id="materias-list">
-                </div>
-            <button onclick="salvarEFiltar()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold shadow-lg">Aplicar Filtros</button>
-        </div>
     </div>
 
     <div class="flex-1 overflow-y-auto p-4 pb-24" id="quiz-container">
         <div class="card-quiz p-6 mb-6">
-            <div class="flex justify-between mb-4">
-                <span id="q-materia" class="text-[10px] uppercase font-bold text-blue-400 bg-blue-900/30 px-2 py-1 rounded">GERAL</span>
-                <span class="text-[10px] font-bold text-slate-500 uppercase" id="q-meta">ENEM</span>
+            <div class="flex justify-between mb-4 text-[10px] font-bold uppercase tracking-widest">
+                <span id="q-materia" class="text-blue-400">CARREGANDO...</span>
+                <span id="q-meta" class="text-slate-500">ENEM</span>
             </div>
-            <div id="q-imagem-container" class="hidden mb-4"><img id="q-imagem-src" src=""></div>
-            <p class="text-base font-medium leading-relaxed text-slate-200" id="q-enunciado">Selecione as matérias nos filtros para começar!</p>
+            <div id="q-imagem-container" class="hidden mb-4"><img id="q-imagem-src" class="w-full rounded-lg border border-slate-700"></div>
+            <p class="text-base text-slate-200" id="q-enunciado">Buscando questão no banco...</p>
         </div>
         <div class="space-y-3" id="options-container"></div>
 
-        <div id="explanation-box" class="hidden mt-6 bg-blue-900/30 border border-blue-500/30 p-4 rounded-2xl">
-            <p class="text-sm text-blue-100 italic" id="q-explicacao"></p>
-            <button onclick="carregarQuestao()" class="mt-4 w-full bg-blue-600 py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition">Próxima Questão <i class="fas fa-arrow-right ml-2"></i></button>
+        <div id="explanation-box" class="hidden mt-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-2xl animate-bounce">
+            <button onclick="carregarQuestao()" class="w-full bg-blue-600 py-4 rounded-2xl font-black shadow-lg">PRÓXIMA QUESTÃO</button>
+        </div>
+    </div>
+
+    <div id="filter-overlay" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6 text-center">
+        <div class="bg-slate-800 w-full max-w-sm rounded-[32px] p-6 border border-slate-700 shadow-2xl">
+            <h2 class="text-xl font-bold mb-4">Ajustar Filtros</h2>
+            <div class="space-y-2 mb-6" id="materias-list"></div>
+            <button onclick="salvarEFiltar()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold">Salvar</button>
         </div>
     </div>
 
@@ -65,84 +69,80 @@
         const supabaseClient = supabase.createClient(urlDoBanco, chaveDoBanco);
 
         let questaoAtual = null;
+        let acertos = 0;
+        let erros = 0;
         let materiasSelecionadas = JSON.parse(localStorage.getItem('materias_enem')) || ["Ciências da Natureza", "Ciências Humanas", "Linguagens e Códigos", "Matemática", "Geral"];
 
-        const todasAsMaterias = ["Ciências da Natureza", "Ciências Humanas", "Linguagens e Códigos", "Matemática", "Geral"];
-
-        function toggleFiltros() {
-            const overlay = document.getElementById('filter-overlay');
-            overlay.classList.toggle('hidden');
-            renderizarFiltros();
-        }
-
-        function renderizarFiltros() {
-            const list = document.getElementById('materias-list');
-            list.innerHTML = todasAsMaterias.map(m => `
-                <label class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-700 cursor-pointer">
-                    <span class="text-sm font-medium">${m}</span>
-                    <input type="checkbox" value="${m}" ${materiasSelecionadas.includes(m) ? 'checked' : ''} class="w-5 h-5 accent-blue-500">
-                </label>
-            `).join('');
-        }
-
-        function salvarEFiltar() {
-            const checkboxes = document.querySelectorAll('#materias-list input:checked');
-            materiasSelecionadas = Array.from(checkboxes).map(cb => cb.value);
-            localStorage.setItem('materias_enem', JSON.stringify(materiasSelecionadas));
-            toggleFiltros();
-            carregarQuestao();
+        function atualizarPlacar() {
+            const total = acertos + erros;
+            const perc = total === 0 ? 0 : Math.round((acertos / total) * 100);
+            document.getElementById('count-acertos').innerText = acertos;
+            document.getElementById('count-erros').innerText = erros;
+            document.getElementById('percentual').innerText = perc + "%";
         }
 
         async function carregarQuestao() {
             document.getElementById('explanation-box').classList.add('hidden');
-            document.getElementById('options-container').innerHTML = '<div class="flex justify-center p-4"><div class="loader"></div></div>';
+            document.getElementById('options-container').innerHTML = '<div class="text-center py-10 italic">Buscando no banco...</div>';
 
-            const { data, error } = await supabaseClient
-                .from('questoes')
-                .select('*')
-                .in('materia', materiasSelecionadas);
+            const { data } = await supabaseClient.from('questoes').select('*').in('materia', materiasSelecionadas);
 
             if (data && data.length > 0) {
                 questaoAtual = data[Math.floor(Math.random() * data.length)];
                 renderizarQuestao(questaoAtual);
-            } else {
-                document.getElementById('q-enunciado').innerText = "Nenhuma questão encontrada para os filtros selecionados.";
-                document.getElementById('options-container').innerHTML = "";
             }
         }
 
         function renderizarQuestao(q) {
             document.getElementById('q-materia').innerText = q.materia;
             document.getElementById('q-meta').innerText = `ENEM ${q.ano}`;
-            document.getElementById('q-enunciado').innerHTML = q.enunciado.replace(/\n/g, '<br>');
-            document.getElementById('q-explicacao').innerText = q.explicacao;
-
-            const imgCont = document.getElementById('q-imagem-container');
-            const imgTag = document.getElementById('q-imagem-src');
-            if (q.img_url) { imgTag.src = q.img_url; imgCont.classList.remove('hidden'); }
-            else { imgCont.classList.add('hidden'); }
-
+            document.getElementById('q-enunciado').innerText = q.enunciado;
             const container = document.getElementById('options-container');
             container.innerHTML = '';
+            
             ['a', 'b', 'c', 'd', 'e'].forEach(l => {
                 const btn = document.createElement('div');
-                btn.className = 'btn-alt p-4 rounded-xl flex gap-3 items-center';
-                btn.onclick = () => verificar(l.toUpperCase(), btn);
-                btn.innerHTML = `<div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-400 border border-slate-700">${l.toUpperCase()}</div>
-                                 <div class="text-sm text-slate-300 flex-1">${q['alt_'+l]}</div>`;
+                btn.className = 'btn-alt p-4 rounded-xl flex items-center gap-3';
+                btn.onclick = () => {
+                    const gab = q.gabarito.toUpperCase();
+                    if(l.toUpperCase() === gab) {
+                        btn.classList.add('correct');
+                        acertos++;
+                    } else {
+                        btn.classList.add('wrong');
+                        erros++;
+                        // Mostra a certa
+                        document.querySelectorAll('.btn-alt').forEach(b => {
+                            if(b.innerText.startsWith(gab)) b.classList.add('correct');
+                        });
+                    }
+                    atualizarPlacar();
+                    document.getElementById('explanation-box').classList.remove('hidden');
+                    document.querySelectorAll('.btn-alt').forEach(b => b.onclick = null);
+                };
+                btn.innerHTML = `<div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold">${l.toUpperCase()}</div>
+                                 <div class="text-sm flex-1">${q['alt_'+l]}</div>`;
                 container.appendChild(btn);
             });
         }
 
-        function verificar(escolha, el) {
-            const gab = questaoAtual.gabarito.toUpperCase();
-            document.querySelectorAll('.btn-alt').forEach(b => b.onclick = null);
-            if (escolha === gab) { el.classList.add('correct'); }
-            else {
-                el.classList.add('wrong');
-                document.querySelectorAll('.btn-alt').forEach(b => { if(b.innerText.startsWith(gab)) b.classList.add('correct'); });
-            }
-            document.getElementById('explanation-box').classList.remove('hidden');
+        // ... Funções de Filtro (Mesma lógica do anterior) ...
+        function toggleFiltros() { document.getElementById('filter-overlay').classList.toggle('hidden'); renderizarFiltros(); }
+        function renderizarFiltros() {
+            const list = document.getElementById('materias-list');
+            list.innerHTML = ["Ciências da Natureza", "Ciências Humanas", "Linguagens e Códigos", "Matemática", "Geral"].map(m => `
+                <label class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-700">
+                    <span class="text-xs font-bold">${m}</span>
+                    <input type="checkbox" value="${m}" ${materiasSelecionadas.includes(m) ? 'checked' : ''} class="w-5 h-5">
+                </label>
+            `).join('');
+        }
+        function salvarEFiltar() {
+            const checks = document.querySelectorAll('#materias-list input:checked');
+            materiasSelecionadas = Array.from(checks).map(c => c.value);
+            localStorage.setItem('materias_enem', JSON.stringify(materiasSelecionadas));
+            toggleFiltros();
+            carregarQuestao();
         }
 
         carregarQuestao();

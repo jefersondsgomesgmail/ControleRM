@@ -9,114 +9,61 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
-        
         :root { --p: #3b82f6; --s: #10b981; --d: #ef4444; --bg: #030712; }
-        
-        body { 
-            background: var(--bg); font-family: 'Outfit', sans-serif; color: white; overflow: hidden;
-            background-image: radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 40%),
-                              radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
-        }
-
-        /* Efeito Vidro Premium */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 32px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Botões de Alternativa Animados */
-        .opt-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .opt-card:active { transform: scale(0.98); }
-
-        .opt-card.correct { 
-            background: rgba(16, 185, 129, 0.15) !important; 
-            border-color: var(--s) !important;
-            box-shadow: 0 0 30px rgba(16, 185, 129, 0.15);
-        }
-
-        .opt-card.wrong { 
-            background: rgba(239, 68, 68, 0.15) !important; 
-            border-color: var(--d) !important;
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-6px); }
-            40%, 80% { transform: translateX(6px); }
-        }
-
-        /* Barras de Status Modernas */
-        .stat-pill { background: rgba(255, 255, 255, 0.05); border-radius: 100px; padding: 6px 16px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        
-        .progress-container { height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; width: 100%; }
-        .progress-glow { height: 100%; border-radius: 10px; box-shadow: 0 0 10px var(--p); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        #filter-overlay { backdrop-filter: blur(30px); background: rgba(3, 7, 18, 0.8); z-index: 999; }
-        
-        .fade-in { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        body { background: var(--bg); font-family: 'Outfit', sans-serif; color: white; overflow: hidden; background-image: radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 40%); }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 32px; }
+        .opt-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; transition: all 0.3s ease; cursor: pointer; }
+        .opt-card:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.08); }
+        .opt-card.correct { background: rgba(16, 185, 129, 0.2) !important; border-color: var(--s) !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.1); }
+        .opt-card.wrong { background: rgba(239, 68, 68, 0.2) !important; border-color: var(--d) !important; }
+        .progress-glow { height: 100%; border-radius: 10px; box-shadow: 0 0 15px var(--p); transition: width 0.8s ease; }
+        #filter-overlay { backdrop-filter: blur(30px); background: rgba(3, 7, 18, 0.85); z-index: 999; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="flex flex-col h-screen max-h-screen">
 
-    <div class="px-6 pt-10 pb-6">
+    <div class="px-6 pt-10 pb-6 bg-gradient-to-b from-black/20 to-transparent">
         <div class="flex justify-between items-center mb-6">
-            <div class="stat-pill flex items-center gap-3">
-                <i class="fas fa-bullseye text-blue-500"></i>
-                <span id="perc-label" class="text-sm font-800 tracking-tighter">0% ACERTOS</span>
+            <div class="flex flex-col">
+                <span class="text-[10px] font-800 text-blue-500 uppercase tracking-widest">Desempenho</span>
+                <span id="perc-label" class="text-2xl font-800 tracking-tighter">0%</span>
             </div>
-            <button onclick="toggleFiltros()" class="w-12 h-12 glass-panel flex items-center justify-center active:scale-90 transition shadow-none border-white/10">
+            <button onclick="toggleFiltros()" class="w-12 h-12 glass-panel flex items-center justify-center active:scale-90 transition">
                 <i class="fas fa-sliders-h text-blue-400"></i>
             </button>
         </div>
-        <div class="progress-container">
+        <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
             <div id="perc-bar" class="progress-glow bg-blue-500" style="width: 0%"></div>
         </div>
     </div>
 
     <div class="flex-1 overflow-y-auto px-6 no-scrollbar pb-32">
-        <div class="glass-panel p-8 mb-8 fade-in" style="animation-delay: 0.1s">
+        <div id="q-card" class="glass-panel p-8 mb-6">
             <div class="flex items-center gap-2 mb-4">
                 <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                <span id="q-area" class="text-[10px] font-800 text-slate-400 uppercase tracking-[0.2em]">CARREGANDO...</span>
+                <span id="q-area" class="text-[10px] font-800 text-slate-400 uppercase tracking-widest">CARREGANDO...</span>
             </div>
-            <p id="q-text" class="text-xl font-400 leading-snug text-white/90"></p>
+            <p id="q-text" class="text-xl font-400 leading-snug text-white/90 italic">Preparando sua prova...</p>
             <div id="q-img-box" class="hidden mt-6">
                 <img id="q-img" src="" class="w-full rounded-2xl border border-white/5 shadow-2xl">
             </div>
         </div>
-
-        <div id="options-box" class="space-y-4 fade-in" style="animation-delay: 0.3s"></div>
-    </div>
-
-    <div id="action-bar" class="fixed bottom-0 left-0 w-full p-8 bg-gradient-to-t from-bg via-bg to-transparent hidden">
-        <button onclick="nextQuestion()" class="w-full bg-blue-600 py-6 rounded-3xl font-800 text-lg shadow-[0_20px_40px_rgba(59,130,246,0.3)] transition-all flex items-center justify-center gap-3">
-            PRÓXIMA QUESTÃO <i class="fas fa-arrow-right text-sm"></i>
-        </button>
+        <div id="options-box" class="space-y-4"></div>
     </div>
 
     <div id="filter-overlay" class="fixed inset-0 hidden flex items-center justify-center p-8">
-        <div class="glass-panel w-full max-w-sm p-10">
-            <h2 class="text-2xl font-800 mb-8 text-center tracking-tight">Estudos</h2>
+        <div class="glass-panel w-full max-w-sm p-10 border-blue-500/20">
+            <h2 class="text-2xl font-800 mb-8 text-center">Filtros</h2>
             <div class="space-y-4 mb-10" id="materias-list"></div>
-            <button onclick="salvarEFiltar()" class="w-full bg-blue-600 py-5 rounded-2xl font-800 shadow-xl">CONCLUÍDO</button>
+            <button onclick="salvarEFiltar()" class="w-full bg-blue-600 py-5 rounded-3xl font-800 shadow-xl active:scale-95 transition">APLICAR</button>
         </div>
+    </div>
+
+    <div id="action-bar" class="fixed bottom-0 left-0 w-full p-8 bg-gradient-to-t from-bg via-bg hidden">
+        <button onclick="nextQuestion()" class="w-full bg-blue-600 py-6 rounded-[32px] font-800 text-lg shadow-2xl active:scale-95 transition flex items-center justify-center gap-3">
+            PRÓXIMA <i class="fas fa-arrow-right text-sm"></i>
+        </button>
     </div>
 
     <script>
@@ -133,7 +80,7 @@
             const list = document.getElementById('materias-list');
             const mats = ["Ciências da Natureza", "Ciências Humanas", "Linguagens e Códigos", "Matemática", "Geral"];
             list.innerHTML = mats.map(m => `
-                <label class="flex items-center justify-between p-5 glass-panel border-white/5 cursor-pointer rounded-2xl">
+                <label class="flex items-center justify-between p-5 glass-panel border-white/5 rounded-2xl">
                     <span class="text-sm font-semibold">${m}</span>
                     <input type="checkbox" value="${m}" ${filtros.includes(m) ? 'checked' : ''} class="w-5 h-5 accent-blue-500">
                 </label>`).join('');
@@ -143,16 +90,26 @@
             const checks = document.querySelectorAll('#materias-list input:checked');
             filtros = Array.from(checks).map(c => c.value);
             localStorage.setItem('m_enem', JSON.stringify(filtros));
-            toggleFiltros(); nextQuestion();
+            toggleFiltros();
+            nextQuestion();
         }
 
         async function nextQuestion() {
             document.getElementById('action-bar').classList.add('hidden');
-            document.getElementById('options-box').innerHTML = '<div class="py-10 text-center opacity-30 text-xs tracking-widest uppercase">Gerando nova jornada...</div>';
-            const { data } = await sb.from('questoes').select('*').in('materia', filtros);
-            if(data && data.length > 0) {
-                qAtual = data[Math.floor(Math.random() * data.length)];
-                render(qAtual);
+            document.getElementById('options-box').innerHTML = '<div class="py-10 text-center opacity-30 text-xs">SORTEANDO...</div>';
+            
+            try {
+                const { data, error } = await sb.from('questoes').select('*').in('materia', filtros);
+                if(data && data.length > 0) {
+                    qAtual = data[Math.floor(Math.random() * data.length)];
+                    render(qAtual);
+                } else {
+                    document.getElementById('q-text').innerText = "Nenhuma questão encontrada com esses filtros.";
+                    document.getElementById('options-box').innerHTML = "";
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('q-text').innerText = "Erro ao carregar. Tente novamente.";
             }
         }
 
@@ -183,7 +140,7 @@
             
             const total = acertos + erros;
             const p = Math.round((acertos / total) * 100);
-            document.getElementById('perc-label').innerText = p + "% ACERTOS";
+            document.getElementById('perc-label').innerText = p + "%";
             document.getElementById('perc-bar').style.width = p + "%";
             document.getElementById('action-bar').classList.remove('hidden');
         }

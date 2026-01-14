@@ -3,67 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ENEM MASTER ELITE V2</title>
+    <title>ENEM MASTER - PREMIUM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
-        :root { --p: #3b82f6; --s: #10b981; --d: #ef4444; --bg: #030712; }
-        body { background: var(--bg); font-family: 'Outfit', sans-serif; color: white; overflow: hidden; background-image: radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 40%); }
-        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 32px; }
-        .opt-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; transition: all 0.3s ease; cursor: pointer; }
-        .opt-card:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.08); }
-        .opt-card.correct { background: rgba(16, 185, 129, 0.2) !important; border-color: var(--s) !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.1); }
-        .opt-card.wrong { background: rgba(239, 68, 68, 0.2) !important; border-color: var(--d) !important; }
-        .progress-glow { height: 100%; border-radius: 10px; box-shadow: 0 0 15px var(--p); transition: width 0.8s ease; }
-        #filter-overlay { backdrop-filter: blur(30px); background: rgba(3, 7, 18, 0.85); z-index: 999; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
+        
+        :root { --p: #3b82f6; --bg: #05070a; }
+        
+        body { 
+            background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: white; overflow: hidden;
+            background-image: radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 35%),
+                              radial-gradient(circle at 100% 100%, rgba(147, 51, 234, 0.1) 0%, transparent 35%);
+        }
+
+        /* Cartão de Questão Premium */
+        .premium-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 35px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        }
+
+        /* Alternativas Estilo Apple */
+        .opt-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 22px;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+        }
+
+        .opt-box:hover { background: rgba(255, 255, 255, 0.06); transform: translateY(-2px); }
+        .opt-box:active { transform: scale(0.97); }
+
+        .opt-box.correct { 
+            background: rgba(16, 185, 129, 0.1) !important; 
+            border-color: #10b981 !important;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.2);
+        }
+
+        .opt-box.wrong { 
+            background: rgba(239, 68, 68, 0.1) !important; 
+            border-color: #ef4444 !important;
+        }
+
+        /* Letras das alternativas fixas */
+        .opt-letter {
+            width: 42px; height: 42px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 14px; color: #64748b;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .correct .opt-letter { background: #10b981; color: white; border-color: #10b981; }
+        .wrong .opt-letter { background: #ef4444; color: white; border-color: #ef4444; }
+
+        /* Barra de Progresso Neon */
+        .progress-glow {
+            height: 100%; border-radius: 20px;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            transition: width 1s ease;
+        }
+
+        #filter-modal { backdrop-filter: blur(40px); background: rgba(0,0,0,0.8); z-index: 9999; }
     </style>
 </head>
-<body class="flex flex-col h-screen max-h-screen">
+<body class="flex flex-col h-screen overflow-hidden">
 
-    <div class="px-6 pt-10 pb-6 bg-gradient-to-b from-black/20 to-transparent">
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex flex-col">
-                <span class="text-[10px] font-800 text-blue-500 uppercase tracking-widest">Desempenho</span>
-                <span id="perc-label" class="text-2xl font-800 tracking-tighter">0%</span>
-            </div>
-            <button onclick="toggleFiltros()" class="w-12 h-12 glass-panel flex items-center justify-center active:scale-90 transition">
-                <i class="fas fa-sliders-h text-blue-400"></i>
-            </button>
-        </div>
-        <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-            <div id="perc-bar" class="progress-glow bg-blue-500" style="width: 0%"></div>
-        </div>
-    </div>
-
-    <div class="flex-1 overflow-y-auto px-6 no-scrollbar pb-32">
-        <div id="q-card" class="glass-panel p-8 mb-6">
-            <div class="flex items-center gap-2 mb-4">
-                <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                <span id="q-area" class="text-[10px] font-800 text-slate-400 uppercase tracking-widest">CARREGANDO...</span>
-            </div>
-            <p id="q-text" class="text-xl font-400 leading-snug text-white/90 italic">Preparando sua prova...</p>
-            <div id="q-img-box" class="hidden mt-6">
-                <img id="q-img" src="" class="w-full rounded-2xl border border-white/5 shadow-2xl">
+    <div class="px-8 pt-12 pb-6 flex justify-between items-center">
+        <div class="flex flex-col">
+            <h2 class="text-[10px] font-800 tracking-[3px] text-blue-500 uppercase mb-1">Status de Estudo</h2>
+            <div class="flex items-baseline gap-2">
+                <span id="perc-label" class="text-3xl font-800 tracking-tighter">0%</span>
+                <span class="text-slate-500 text-xs font-bold">de precisão</span>
             </div>
         </div>
-        <div id="options-box" class="space-y-4"></div>
-    </div>
-
-    <div id="filter-overlay" class="fixed inset-0 hidden flex items-center justify-center p-8">
-        <div class="glass-panel w-full max-w-sm p-10 border-blue-500/20">
-            <h2 class="text-2xl font-800 mb-8 text-center">Filtros</h2>
-            <div class="space-y-4 mb-10" id="materias-list"></div>
-            <button onclick="salvarEFiltar()" class="w-full bg-blue-600 py-5 rounded-3xl font-800 shadow-xl active:scale-95 transition">APLICAR</button>
-        </div>
-    </div>
-
-    <div id="action-bar" class="fixed bottom-0 left-0 w-full p-8 bg-gradient-to-t from-bg via-bg hidden">
-        <button onclick="nextQuestion()" class="w-full bg-blue-600 py-6 rounded-[32px] font-800 text-lg shadow-2xl active:scale-95 transition flex items-center justify-center gap-3">
-            PRÓXIMA <i class="fas fa-arrow-right text-sm"></i>
+        <button onclick="openMenu()" class="w-14 h-14 premium-card flex items-center justify-center border-white/10">
+            <i class="fas fa-th-large text-blue-500 text-xl"></i>
         </button>
+    </div>
+
+    <div class="px-8 mb-8">
+        <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+            <div id="perc-bar" class="progress-glow" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-8 no-scrollbar pb-32">
+        <div class="premium-card p-8 mb-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <span id="q-area" class="text-[10px] font-800 text-blue-400 uppercase tracking-widest">---</span>
+                </div>
+                <span id="q-ano" class="text-[10px] font-bold text-slate-500 tracking-widest">---</span>
+            </div>
+            <p id="q-text" class="text-xl font-500 leading-snug text-white/95 mb-6"></p>
+            <div id="q-img-box" class="hidden"><img id="q-img" src="" class="w-full rounded-3xl border border-white/10 shadow-2xl"></div>
+        </div>
+
+        <div id="options-container" class="space-y-4"></div>
+    </div>
+
+    <div id="btn-next" class="fixed bottom-0 left-0 w-full p-8 bg-gradient-to-t from-black hidden">
+        <button onclick="nextQ()" class="w-full bg-blue-600 hover:bg-blue-500 py-6 rounded-[28px] font-800 text-lg shadow-2xl shadow-blue-500/30 flex items-center justify-center gap-4 transition-all active:scale-95">
+            PRÓXIMA QUESTÃO <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+
+    <div id="filter-modal" class="fixed inset-0 hidden flex items-center justify-center p-8">
+        <div class="premium-card w-full max-w-sm p-10 border-blue-500/30">
+            <h3 class="text-2xl font-800 text-center mb-8">Filtros de Venda</h3>
+            <div id="materia-list" class="space-y-3 mb-10"></div>
+            <button onclick="applyFilters()" class="w-full bg-blue-600 py-5 rounded-2xl font-800 text-lg">SALVAR CONFIGURAÇÕES</button>
+        </div>
     </div>
 
     <script>
@@ -71,81 +129,75 @@
         const key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhbWNqeHFwc2l5cWVhdHV1bmlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3ODkyMDgsImV4cCI6MjA4MzM2NTIwOH0.kaskIarBgrF4iQS5CfSLhkxBPGq3F3h05SrzrHSHYZE";
         const sb = supabase.createClient(url, key);
 
-        let acertos = 0, erros = 0, qAtual = null;
-        let filtros = JSON.parse(localStorage.getItem('m_enem')) || ["Ciências da Natureza", "Ciências Humanas", "Linguagens e Códigos", "Matemática", "Geral"];
+        let correctCount = 0, wrongCount = 0, currentQ = null;
+        let activeFilters = JSON.parse(localStorage.getItem('f_venda')) || ["Ciências da Natureza", "Ciências Humanas", "Linguagens e Códigos", "Matemática", "Geral"];
 
-        function toggleFiltros() { document.getElementById('filter-overlay').classList.toggle('hidden'); renderFiltros(); }
-        
-        function renderFiltros() {
-            const list = document.getElementById('materias-list');
-            const mats = ["Ciências da Natureza", "Ciências Humanas", "Linguagens e Códigos", "Matemática", "Geral"];
-            list.innerHTML = mats.map(m => `
-                <label class="flex items-center justify-between p-5 glass-panel border-white/5 rounded-2xl">
-                    <span class="text-sm font-semibold">${m}</span>
-                    <input type="checkbox" value="${m}" ${filtros.includes(m) ? 'checked' : ''} class="w-5 h-5 accent-blue-500">
+        function openMenu() { document.getElementById('filter-modal').classList.remove('hidden'); renderMenu(); }
+        function renderMenu() {
+            const list = document.getElementById('materia-list');
+            const opts = ["Ciências da Natureza", "Ciências Humanas", "Linguagens e Códigos", "Matemática", "Geral"];
+            list.innerHTML = opts.map(o => `
+                <label class="flex items-center justify-between p-5 premium-card border-white/5 cursor-pointer">
+                    <span class="text-sm font-bold">${o}</span>
+                    <input type="checkbox" value="${o}" ${activeFilters.includes(o) ? 'checked' : ''} class="w-6 h-6 accent-blue-600">
                 </label>`).join('');
         }
-
-        function salvarEFiltar() {
-            const checks = document.querySelectorAll('#materias-list input:checked');
-            filtros = Array.from(checks).map(c => c.value);
-            localStorage.setItem('m_enem', JSON.stringify(filtros));
-            toggleFiltros();
-            nextQuestion();
+        function applyFilters() {
+            const selected = document.querySelectorAll('#materia-list input:checked');
+            activeFilters = Array.from(selected).map(i => i.value);
+            localStorage.setItem('f_venda', JSON.stringify(activeFilters));
+            document.getElementById('filter-modal').classList.add('hidden');
+            nextQ();
         }
 
-        async function nextQuestion() {
-            document.getElementById('action-bar').classList.add('hidden');
-            document.getElementById('options-box').innerHTML = '<div class="py-10 text-center opacity-30 text-xs">SORTEANDO...</div>';
+        async function nextQ() {
+            document.getElementById('btn-next').classList.add('hidden');
+            document.getElementById('options-container').innerHTML = '<div class="text-center py-20 opacity-20 text-sm tracking-widest font-bold">ANALISANDO BANCO DE DADOS...</div>';
             
-            try {
-                const { data, error } = await sb.from('questoes').select('*').in('materia', filtros);
-                if(data && data.length > 0) {
-                    qAtual = data[Math.floor(Math.random() * data.length)];
-                    render(qAtual);
-                } else {
-                    document.getElementById('q-text').innerText = "Nenhuma questão encontrada com esses filtros.";
-                    document.getElementById('options-box').innerHTML = "";
-                }
-            } catch (e) {
-                console.error(e);
-                document.getElementById('q-text').innerText = "Erro ao carregar. Tente novamente.";
+            const { data } = await sb.from('questoes').select('*').in('materia', activeFilters);
+            if(data && data.length > 0) {
+                currentQ = data[Math.floor(Math.random() * data.length)];
+                renderQ(currentQ);
             }
         }
 
-        function render(q) {
-            document.getElementById('q-area').innerText = `${q.materia} • ${q.ano}`;
+        function renderQ(q) {
+            document.getElementById('q-area').innerText = q.materia;
+            document.getElementById('q-ano').innerText = `ENEM ${q.ano}`;
             document.getElementById('q-text').innerText = q.enunciado;
             const imgBox = document.getElementById('q-img-box'), img = document.getElementById('q-img');
             if(q.img_url) { img.src = q.img_url; imgBox.classList.remove('hidden'); } else { imgBox.classList.add('hidden'); }
             
-            const box = document.getElementById('options-box');
+            const box = document.getElementById('options-container');
             box.innerHTML = '';
             ['a','b','c','d','e'].forEach(l => {
                 const btn = document.createElement('div');
-                btn.className = 'opt-card p-6 flex items-center gap-5';
-                btn.onclick = () => check(l.toUpperCase(), btn);
-                btn.innerHTML = `<div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center font-800 text-sm border border-white/10">${l.toUpperCase()}</div>
-                                 <div class="text-[15px] font-400 flex-1 text-white/70">${q['alt_'+l]}</div>`;
+                btn.className = 'opt-box p-6 flex items-center gap-5';
+                btn.onclick = () => validate(l.toUpperCase(), btn);
+                btn.innerHTML = `<div class="opt-letter">${l.toUpperCase()}</div>
+                                 <div class="text-sm font-medium flex-1 text-slate-200">${q['alt_'+l]}</div>`;
                 box.appendChild(btn);
             });
         }
 
-        function check(escolha, el) {
-            const gab = qAtual.gabarito.toUpperCase();
-            const btns = document.querySelectorAll('.opt-card');
-            btns.forEach(b => b.onclick = null);
-            if(escolha === gab) { el.classList.add('correct'); acertos++; }
-            else { el.classList.add('wrong'); erros++; btns.forEach(b => { if(b.innerText.startsWith(gab)) b.classList.add('correct'); }); }
+        function validate(choice, el) {
+            const gab = currentQ.gabarito.toUpperCase();
+            document.querySelectorAll('.opt-box').forEach(b => b.onclick = null);
             
-            const total = acertos + erros;
-            const p = Math.round((acertos / total) * 100);
+            if(choice === gab) { el.classList.add('correct'); correctCount++; }
+            else { 
+                el.classList.add('wrong'); wrongCount++; 
+                document.querySelectorAll('.opt-box').forEach(b => { if(b.innerText.startsWith(gab)) b.classList.add('correct'); });
+            }
+            
+            const total = correctCount + wrongCount;
+            const p = Math.round((correctCount / total) * 100);
             document.getElementById('perc-label').innerText = p + "%";
             document.getElementById('perc-bar').style.width = p + "%";
-            document.getElementById('action-bar').classList.remove('hidden');
+            document.getElementById('btn-next').classList.remove('hidden');
         }
 
-        nextQuestion();
+        nextQ();
     </script>
 </body>
 </html>
